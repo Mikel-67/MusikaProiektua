@@ -14,12 +14,16 @@ import android.widget.TextView
 import com.spotify.sdk.android.auth.AuthorizationClient
 import com.spotify.sdk.android.auth.AuthorizationResponse
 import com.example.musicaaplikazioa.SpotifyAuthManager
+import com.google.firebase.firestore.FirebaseFirestore
 
 
 class MainActivity : AppCompatActivity() {
     private lateinit var spotifyAuthManager: SpotifyAuthManager
     private var accessToken: String? = null
     private lateinit var oraingoAbestia: TextView;
+    private lateinit var tvPlayerState: TextView
+
+    val db = FirebaseFirestore.getInstance()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -30,7 +34,27 @@ class MainActivity : AppCompatActivity() {
         // Start authentication
         spotifyAuthManager.authenticate()
         oraingoAbestia = findViewById(R.id.currentTrackText);
+        tvPlayerState = findViewById(R.id.tvPlayerState);
+
+        fetchSongTitle();
     }
+
+    private fun fetchSongTitle() {
+        val songRef = db.collection("posts").document("3")
+        songRef.get()
+            .addOnSuccessListener { document ->
+                if (document.exists()) {
+                    val text = document.get("text")?.toString() ?: "No text found"
+                    tvPlayerState.text = text
+                } else {
+                    tvPlayerState.text = "Documento '3' no existe"
+                }
+            }
+            .addOnFailureListener { exception ->
+                tvPlayerState.text = "Error al obtener datos: ${exception.message}"
+            }
+    }
+
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)

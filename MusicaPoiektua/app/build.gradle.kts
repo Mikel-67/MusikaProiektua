@@ -60,6 +60,6 @@ dependencies {
     implementation("com.adamratzman:spotify-api-kotlin-android:4.1.0")
 
     implementation(platform("com.google.firebase:firebase-bom:34.3.0"))
-
+    implementation("com.google.firebase:firebase-firestore")
 
 }
