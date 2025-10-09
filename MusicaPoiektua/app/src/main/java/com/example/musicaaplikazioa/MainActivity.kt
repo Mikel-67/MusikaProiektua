@@ -1,5 +1,6 @@
 package com.example.musicaaplikazioa
 
+import androidx.recyclerview.widget.LinearLayoutManager
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
@@ -9,12 +10,20 @@ import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.launch
 import android.widget.Button
 import android.widget.TextView
+import androidx.recyclerview.widget.RecyclerView
 
 // Spotify Auth SDK
 import com.spotify.sdk.android.auth.AuthorizationClient
 import com.spotify.sdk.android.auth.AuthorizationResponse
 import com.example.musicaaplikazioa.SpotifyAuthManager
+
+
+import com.example.musicaaplikazioa.adapter.PostsAdapter
+import com.example.musicaaplikazioa.models.SpotifyData
+import  com.example.musicaaplikazioa.models.Post
+
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.DocumentSnapshot
 
 
 class MainActivity : AppCompatActivity() {
@@ -22,7 +31,10 @@ class MainActivity : AppCompatActivity() {
     private var accessToken: String? = null
     private lateinit var oraingoAbestia: TextView;
     private lateinit var tvPlayerState: TextView
-
+    private lateinit var adapter: PostsAdapter
+    private lateinit var recyclerView: RecyclerView
+    private var lastDocument: DocumentSnapshot? = null
+    private var isLoading = false
     val db = FirebaseFirestore.getInstance()
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -35,25 +47,59 @@ class MainActivity : AppCompatActivity() {
         spotifyAuthManager.authenticate()
         oraingoAbestia = findViewById(R.id.currentTrackText);
         tvPlayerState = findViewById(R.id.tvPlayerState);
+        recyclerView = findViewById(R.id.recyclerView)
+        adapter = PostsAdapter(mutableListOf())
+        recyclerView.adapter = adapter
+        recyclerView.layoutManager = LinearLayoutManager(this)
 
-        fetchSongTitle();
-    }
+        val layoutManager = recyclerView.layoutManager as LinearLayoutManager
+        recyclerView.addOnScrollListener(object : RecyclerView.OnScrollListener() {
+            override fun onScrolled(rv: RecyclerView, dx: Int, dy: Int) {
+                super.onScrolled(rv, dx, dy)
+                val totalItemCount = layoutManager.itemCount
+                val lastVisible = layoutManager.findLastVisibleItemPosition()
 
-    private fun fetchSongTitle() {
-        val songRef = db.collection("posts").document("3")
-        songRef.get()
-            .addOnSuccessListener { document ->
-                if (document.exists()) {
-                    val text = document.get("text")?.toString() ?: "No text found"
-                    tvPlayerState.text = text
-                } else {
-                    tvPlayerState.text = "Documento '3' no existe"
+                if (lastVisible >= totalItemCount - 2) {
+                    loadPosts()
                 }
             }
-            .addOnFailureListener { exception ->
-                tvPlayerState.text = "Error al obtener datos: ${exception.message}"
+        })
+    }
+
+    private fun loadPosts() {
+        if (isLoading) return
+        isLoading = true
+
+        var query = db.collection("posts").limit(5)
+        lastDocument?.let { query = query.startAfter(it) }
+
+        query.get()
+            .addOnSuccessListener { snapshot ->
+                if (!snapshot.isEmpty) {
+                    val posts = snapshot.documents.mapNotNull { doc ->
+                        val spotifyMap = doc.get("spotifyData") as? Map<*, *>
+                        val spotifyData = SpotifyData(
+                            name = spotifyMap?.get("name") as? String ?: "aaaaa",
+                            artist = spotifyMap?.get("artist") as? String ?: "bbbbb",
+                            album = spotifyMap?.get("album") as? String ?: "ccccc",
+                            url = spotifyMap?.get("url") as? String ?: "",
+                            spotifyTrackId = spotifyMap?.get("spotifyTrackId") as? String ?: ""
+                        )
+                        val userId = doc.getString("userId") ?: ""
+                        Post(spotifyData, userId)
+                    }
+
+                    adapter.addPosts(posts)
+                    lastDocument = snapshot.documents.last()
+                }
+                isLoading = false
+            }
+            .addOnFailureListener {
+                isLoading = false
+                Toast.makeText(this, "Error cargando posts", Toast.LENGTH_SHORT).show()
             }
     }
+
 
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
@@ -158,4 +204,5 @@ class MainActivity : AppCompatActivity() {
             }
         }
     }
+
 }
