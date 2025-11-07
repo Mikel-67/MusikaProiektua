@@ -1,8 +1,12 @@
 package com.example.musicaaplikazioa.models
 
-import com.example.musicaaplikazioa.models.SpotifyData
+import com.google.firebase.Timestamp
 
 data class Post(
+    val createdAt: Timestamp? = null,
+    val likesCount: Int = 0,
+    val rate: Float = 0f,
     val spotifyData: SpotifyData = SpotifyData(),
-    val userId: String = ""
+    val text: String = "",
+    val userId: Int = 0
 )

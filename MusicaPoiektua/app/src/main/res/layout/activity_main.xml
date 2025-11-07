@@ -1,57 +1,45 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:orientation="vertical"
-    android:padding="24dp"
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    tools:context=".MainActivity">
 
-    <Button
-        android:id="@+id/btnAuthenticate"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Authenticate with Spotify" />
-
-    <Button
-        android:id="@+id/btn_play"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Play Track" />
-
-    <Button
-        android:id="@+id/btn_pause"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Pause" />
-
-    <Button
-        android:id="@+id/btn_next"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Next Track" />
-
-    <Button
-        android:id="@+id/btnState"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Get Player State" />
-
-    <TextView
-        android:id="@+id/tvPlayerState"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Player State"
-        android:paddingTop="16dp" />
-    <TextView
-        android:id="@+id/currentTrackText"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Esperando canción..."
-        android:textSize="18sp"
-        android:layout_centerInParent="true"/>
-
+    <!-- RecyclerView ocupa toda la pantalla -->
     <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/recyclerView"
+        android:id="@+id/rvPosts"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"/>
+        android:layout_height="match_parent"
+        android:clipToPadding="false"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"/>
 
-</LinearLayout>
+    <!-- ProgressBar flotante -->
+    <ProgressBar
+        android:id="@+id/pbKargatzen"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:visibility="gone"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"/>
+
+    <com.google.android.material.bottomnavigation.BottomNavigationView
+        android:id="@+id/bottomNav"
+        android:layout_width="0dp"
+        android:layout_height="70dp"
+        android:background="?android:attr/windowBackground"
+        app:labelVisibilityMode="labeled"
+        app:itemIconTint="@color/black"
+        app:itemTextColor="@color/black"
+        app:menu="@menu/bottom_nav_menu"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"/>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

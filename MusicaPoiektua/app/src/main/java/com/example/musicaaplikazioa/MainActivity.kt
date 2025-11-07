@@ -1,41 +1,51 @@
 package com.example.musicaaplikazioa
 
+import android.content.Context
 import androidx.recyclerview.widget.LinearLayoutManager
 import android.content.Intent
 import android.os.Bundle
+import android.os.Handler
 import android.util.Log
+import android.view.View
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.launch
 import android.widget.Button
+import android.widget.ProgressBar
 import android.widget.TextView
+import androidx.core.widget.NestedScrollView
+import androidx.recyclerview.widget.PagerSnapHelper
 import androidx.recyclerview.widget.RecyclerView
 
 // Spotify Auth SDK
 import com.spotify.sdk.android.auth.AuthorizationClient
 import com.spotify.sdk.android.auth.AuthorizationResponse
 import com.example.musicaaplikazioa.SpotifyAuthManager
+import com.example.musicaaplikazioa.SpotifyPlaybackManager
+import com.example.musicaaplikazioa.adapter.PostAdaptadorea
+import com.example.musicaaplikazioa.models.Post
 
 
-import com.example.musicaaplikazioa.adapter.PostsAdapter
 import com.example.musicaaplikazioa.models.SpotifyData
-import  com.example.musicaaplikazioa.models.Post
 
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.DocumentSnapshot
+import okhttp3.internal.http2.Http2Reader
 
 
 class MainActivity : AppCompatActivity() {
     private lateinit var spotifyAuthManager: SpotifyAuthManager
+    private lateinit var spotifyPlaybackManager: SpotifyPlaybackManager
     private var accessToken: String? = null
     private lateinit var oraingoAbestia: TextView;
-    private lateinit var tvPlayerState: TextView
-    private lateinit var adapter: PostsAdapter
-    private lateinit var recyclerView: RecyclerView
-    private var lastDocument: DocumentSnapshot? = null
+    private lateinit var db: FirebaseFirestore
+    lateinit var rvPost: RecyclerView
+    lateinit var pbKargatzen: ProgressBar
+    private lateinit var adapter: PostAdaptadorea
+
+    var postLista: ArrayList<Post> = ArrayList()
     private var isLoading = false
-    val db = FirebaseFirestore.getInstance()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -43,65 +53,79 @@ class MainActivity : AppCompatActivity() {
 
         spotifyAuthManager = SpotifyAuthManager(this)
 
-        // Start authentication
-        spotifyAuthManager.authenticate()
-        oraingoAbestia = findViewById(R.id.currentTrackText);
-        tvPlayerState = findViewById(R.id.tvPlayerState);
-        recyclerView = findViewById(R.id.recyclerView)
-        adapter = PostsAdapter(mutableListOf())
-        recyclerView.adapter = adapter
-        recyclerView.layoutManager = LinearLayoutManager(this)
+        rvPost = findViewById(R.id.rvPosts)
+        rvPost.layoutManager = LinearLayoutManager(this, RecyclerView.VERTICAL, false)
+        PagerSnapHelper().attachToRecyclerView(rvPost)
+        pbKargatzen = findViewById(R.id.pbKargatzen)
 
-        val layoutManager = recyclerView.layoutManager as LinearLayoutManager
-        recyclerView.addOnScrollListener(object : RecyclerView.OnScrollListener() {
-            override fun onScrolled(rv: RecyclerView, dx: Int, dy: Int) {
-                super.onScrolled(rv, dx, dy)
-                val totalItemCount = layoutManager.itemCount
-                val lastVisible = layoutManager.findLastVisibleItemPosition()
+        db = FirebaseFirestore.getInstance()
+        adapter = PostAdaptadorea(postLista)
 
-                if (lastVisible >= totalItemCount - 2) {
-                    loadPosts()
+        rvPost.adapter = adapter
+
+        abestiakEskuratu()
+
+        rvPost.addOnScrollListener(object : RecyclerView.OnScrollListener() {
+            override fun onScrollStateChanged(recyclerView: RecyclerView, newState: Int) {
+                super.onScrollStateChanged(recyclerView, newState)
+
+                val layoutManager = recyclerView.layoutManager as LinearLayoutManager
+                if (newState == RecyclerView.SCROLL_STATE_IDLE) {
+                    val position = layoutManager.findFirstCompletelyVisibleItemPosition()
+
+                    if (position != RecyclerView.NO_POSITION && position < postLista.size) {
+                        val currentPost = postLista[position]
+                        val trackId = currentPost.spotifyData.spotifyTrackId
+
+                        if (!trackId.isNullOrEmpty()) {
+                            val uri = "spotify:track:$trackId"
+                            spotifyPlaybackManager.play(uri)
+                            Log.d("Spotify", "🎵 Reproduciendo canción con ID: $uri")
+                        } else {
+                            Log.w("Spotify", "⚠️ Este post no tiene trackId.")
+                        }
+                    }
+                }
+
+                val lastVisible = layoutManager.findLastCompletelyVisibleItemPosition()
+
+                if (!isLoading && lastVisible == adapter.itemCount - 1) {
+                    // Llegaste al final
+                    isLoading = true
+                    pbKargatzen.visibility = View.VISIBLE
+
+                    Handler().postDelayed({
+                        abestiakEskuratu()
+                        isLoading = false
+                        pbKargatzen.visibility = View.GONE
+                    }, 1000)
                 }
             }
         })
+        // Start authentication
+        spotifyAuthManager.authenticate()
     }
 
-    private fun loadPosts() {
-        if (isLoading) return
-        isLoading = true
-
-        var query = db.collection("posts").limit(5)
-        lastDocument?.let { query = query.startAfter(it) }
-
-        query.get()
-            .addOnSuccessListener { snapshot ->
-                if (!snapshot.isEmpty) {
-                    val posts = snapshot.documents.mapNotNull { doc ->
-                        val spotifyMap = doc.get("spotifyData") as? Map<*, *>
-                        val spotifyData = SpotifyData(
-                            name = spotifyMap?.get("name") as? String ?: "aaaaa",
-                            artist = spotifyMap?.get("artist") as? String ?: "bbbbb",
-                            album = spotifyMap?.get("album") as? String ?: "ccccc",
-                            url = spotifyMap?.get("url") as? String ?: "",
-                            spotifyTrackId = spotifyMap?.get("spotifyTrackId") as? String ?: ""
-                        )
-                        val userId = doc.getString("userId") ?: ""
-                        Post(spotifyData, userId)
-                    }
-
-                    adapter.addPosts(posts)
-                    lastDocument = snapshot.documents.last()
+    private fun abestiakEskuratu() {
+        db.collection("posts")
+            .limit(10)
+            .get()
+            .addOnSuccessListener { documents ->
+                for (document in documents) {
+                    val post = document.toObject(Post::class.java)
+                    postLista.add(post)
                 }
-                isLoading = false
+                adapter.notifyDataSetChanged()
+                pbKargatzen.visibility = View.GONE
             }
-            .addOnFailureListener {
-                isLoading = false
-                Toast.makeText(this, "Error cargando posts", Toast.LENGTH_SHORT).show()
+            .addOnFailureListener { e ->
+                Log.e("Firestore", "Error al obtener posts", e)
+                pbKargatzen.visibility = View.GONE
             }
     }
 
 
-
+    //Spotify funtzioak
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
 
@@ -172,15 +196,15 @@ class MainActivity : AppCompatActivity() {
 
         playbackManager.connect { success ->
             if (success) {
-                // Connection successful - you can now control playback
-                setupPlaybackControls(playbackManager)
+                spotifyPlaybackManager = playbackManager
+                //setupPlaybackControls(playbackManager)
             } else {
                 showError("Failed to connect to Spotify app. Please ensure Spotify is installed.")
             }
         }
     }
 
-    private fun setupPlaybackControls(playbackManager: SpotifyPlaybackManager) {
+    /*private fun setupPlaybackControls(playbackManager: SpotifyPlaybackManager) {
         findViewById<Button>(R.id.btn_play).setOnClickListener {
             // Play a specific track or playlist
             playbackManager.play("spotify:track:6D87OewwdEhhSUWij4jUKp")
@@ -203,6 +227,6 @@ class MainActivity : AppCompatActivity() {
                 Log.d("PlayerState", "Playing: $isPlaying, Track: ${currentTrack.name}")
             }
         }
-    }
+    }*/
 
 }
