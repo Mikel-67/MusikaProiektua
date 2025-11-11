@@ -1,6 +1,5 @@
 package com.example.musicaaplikazioa
 
-import android.content.Context
 import androidx.recyclerview.widget.LinearLayoutManager
 import android.content.Intent
 import android.os.Bundle
@@ -11,27 +10,19 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.launch
-import android.widget.Button
 import android.widget.ProgressBar
 import android.widget.TextView
-import androidx.core.widget.NestedScrollView
 import androidx.recyclerview.widget.PagerSnapHelper
 import androidx.recyclerview.widget.RecyclerView
 
 // Spotify Auth SDK
 import com.spotify.sdk.android.auth.AuthorizationClient
 import com.spotify.sdk.android.auth.AuthorizationResponse
-import com.example.musicaaplikazioa.SpotifyAuthManager
-import com.example.musicaaplikazioa.SpotifyPlaybackManager
+
 import com.example.musicaaplikazioa.adapter.PostAdaptadorea
 import com.example.musicaaplikazioa.models.Post
 
-
-import com.example.musicaaplikazioa.models.SpotifyData
-
 import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.firestore.DocumentSnapshot
-import okhttp3.internal.http2.Http2Reader
 
 
 class MainActivity : AppCompatActivity() {

@@ -9,6 +9,10 @@ android {
     namespace = "com.example.musicaaplikazioa"
     compileSdk = 36
 
+    buildFeatures {
+        viewBinding = true
+    }
+
     defaultConfig {
         applicationId = "com.example.musicaaplikazioa"
         minSdk = 24

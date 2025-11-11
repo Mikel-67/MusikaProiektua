@@ -8,16 +8,18 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.MusicaAplikazioa">
 
-        <activity
-            android:name=".MainActivity"
-            android:exported="true"
-            android:launchMode="singleTop">
-
-            <!-- Launcher -->
+        <activity android:name=".LoginActivity"
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+        </activity>
+
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            android:launchMode="singleTop">
 
             <!-- Spotify authentication callback -->
             <intent-filter>
@@ -31,6 +33,10 @@
             </intent-filter>
 
         </activity>
+
+        <activity
+            android:name=".ErregistroActivity"
+            android:exported="true" />
 
     </application>
 </manifest>
