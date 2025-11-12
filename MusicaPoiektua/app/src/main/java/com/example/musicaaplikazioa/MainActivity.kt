@@ -29,7 +29,6 @@ class MainActivity : AppCompatActivity() {
     private lateinit var spotifyAuthManager: SpotifyAuthManager
     private lateinit var spotifyPlaybackManager: SpotifyPlaybackManager
     private var accessToken: String? = null
-    private lateinit var oraingoAbestia: TextView;
     private lateinit var db: FirebaseFirestore
     lateinit var rvPost: RecyclerView
     lateinit var pbKargatzen: ProgressBar

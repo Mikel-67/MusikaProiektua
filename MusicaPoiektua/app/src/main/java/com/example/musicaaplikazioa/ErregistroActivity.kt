@@ -30,6 +30,10 @@ class ErregistroActivity : AppCompatActivity() {
                 checkAndRegisterUser(email, password, username)
             }
         }
+
+        binding.tvLogin.setOnClickListener {
+            startActivity(Intent(this, LoginActivity::class.java))
+        }
     }
 
     private fun checkAndRegisterUser(email: String, password: String, userName: String) {
