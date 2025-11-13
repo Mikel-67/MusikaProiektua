@@ -8,5 +8,5 @@ data class Post(
     val rate: Float = 0f,
     val spotifyData: SpotifyData = SpotifyData(),
     val text: String = "",
-    val userId: Int = 0
+    val userId: String = ""
 )

@@ -24,18 +24,19 @@ import com.example.musicaaplikazioa.models.Post
 
 import com.google.firebase.firestore.FirebaseFirestore
 
+import com.example.musicaaplikazioa.pantailak.HomePantaila
+import com.example.musicaaplikazioa.pantailak.ProfilaPantaila
+import com.google.android.material.bottomnavigation.BottomNavigationView
+import android.widget.ImageView
+import androidx.constraintlayout.widget.ConstraintLayout
+
 
 class MainActivity : AppCompatActivity() {
     private lateinit var spotifyAuthManager: SpotifyAuthManager
     private lateinit var spotifyPlaybackManager: SpotifyPlaybackManager
+    private lateinit var homePantaila: HomePantaila
     private var accessToken: String? = null
-    private lateinit var db: FirebaseFirestore
-    lateinit var rvPost: RecyclerView
-    lateinit var pbKargatzen: ProgressBar
-    private lateinit var adapter: PostAdaptadorea
 
-    var postLista: ArrayList<Post> = ArrayList()
-    private var isLoading = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -43,77 +44,60 @@ class MainActivity : AppCompatActivity() {
 
         spotifyAuthManager = SpotifyAuthManager(this)
 
-        rvPost = findViewById(R.id.rvPosts)
-        rvPost.layoutManager = LinearLayoutManager(this, RecyclerView.VERTICAL, false)
-        PagerSnapHelper().attachToRecyclerView(rvPost)
-        pbKargatzen = findViewById(R.id.pbKargatzen)
-
-        db = FirebaseFirestore.getInstance()
-        adapter = PostAdaptadorea(postLista)
-
-        rvPost.adapter = adapter
-
-        abestiakEskuratu()
-
-        rvPost.addOnScrollListener(object : RecyclerView.OnScrollListener() {
-            override fun onScrollStateChanged(recyclerView: RecyclerView, newState: Int) {
-                super.onScrollStateChanged(recyclerView, newState)
-
-                val layoutManager = recyclerView.layoutManager as LinearLayoutManager
-                if (newState == RecyclerView.SCROLL_STATE_IDLE) {
-                    val position = layoutManager.findFirstCompletelyVisibleItemPosition()
-
-                    if (position != RecyclerView.NO_POSITION && position < postLista.size) {
-                        val currentPost = postLista[position]
-                        val trackId = currentPost.spotifyData.spotifyTrackId
-
-                        if (!trackId.isNullOrEmpty()) {
-                            val uri = "spotify:track:$trackId"
-                            spotifyPlaybackManager.play(uri)
-                            Log.d("Spotify", "🎵 Reproduciendo canción con ID: $uri")
-                        } else {
-                            Log.w("Spotify", "⚠️ Este post no tiene trackId.")
-                        }
-                    }
-                }
-
-                val lastVisible = layoutManager.findLastCompletelyVisibleItemPosition()
-
-                if (!isLoading && lastVisible == adapter.itemCount - 1) {
-                    // Llegaste al final
-                    isLoading = true
-                    pbKargatzen.visibility = View.VISIBLE
-
-                    Handler().postDelayed({
-                        abestiakEskuratu()
-                        isLoading = false
-                        pbKargatzen.visibility = View.GONE
-                    }, 1000)
-                }
-            }
-        })
         // Start authentication
         spotifyAuthManager.authenticate()
-    }
 
-    private fun abestiakEskuratu() {
-        db.collection("posts")
-            .limit(10)
-            .get()
-            .addOnSuccessListener { documents ->
-                for (document in documents) {
-                    val post = document.toObject(Post::class.java)
-                    postLista.add(post)
+        homePantaila = HomePantaila()
+
+        val bottomNav: BottomNavigationView = findViewById(R.id.bottomNav)
+
+        bottomNav.setOnItemSelectedListener { item ->
+            when (item.itemId) {
+                R.id.nav_home -> {
+                    mostrarHome()
+                    true
                 }
-                adapter.notifyDataSetChanged()
-                pbKargatzen.visibility = View.GONE
+                R.id.nav_profile -> {
+                    mostrarPerfil()
+                    true
+                }
+                R.id.nav_search -> {
+                    true
+                }
+                else -> false
             }
-            .addOnFailureListener { e ->
-                Log.e("Firestore", "Error al obtener posts", e)
-                pbKargatzen.visibility = View.GONE
-            }
+        }
     }
 
+    private fun mostrarHome() {
+        val contenedor = findViewById<ConstraintLayout>(R.id.contenedorPrincipal)
+        contenedor.removeAllViews() // quitar lo que estuviera antes
+
+        // Inflar el layout de home
+        val homeView = layoutInflater.inflate(R.layout.home_pantaila, contenedor, false)
+        contenedor.addView(homeView)
+        val rvPosts: RecyclerView = findViewById(R.id.rvPosts)
+        val pbKargatzen: ProgressBar = findViewById(R.id.pbKargatzen)
+
+        homePantaila.sortu(rvPosts, pbKargatzen, this, spotifyPlaybackManager)
+    }
+
+    private fun mostrarPerfil() {
+        val contenedor = findViewById<ConstraintLayout>(R.id.contenedorPrincipal)
+        contenedor.removeAllViews() // quitar el home incluido
+
+        // Inflar el layout de perfil
+        val perfilView = layoutInflater.inflate(R.layout.profila_pantaila, contenedor, false)
+        contenedor.addView(perfilView)
+
+        val ivProfilePic: ImageView = findViewById(R.id.ivProfilePic)
+        val tvUserName: TextView = findViewById(R.id.tvUserName)
+        val tvEmail: TextView = findViewById(R.id.tvEmail)
+        val rvUserPosts: RecyclerView = findViewById(R.id.rvUserPosts)
+
+        val profilaPantaila = ProfilaPantaila()
+        profilaPantaila.sortu(this, ivProfilePic, tvUserName, tvEmail, rvUserPosts, userId = "1")
+    }
 
     //Spotify funtzioak
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
@@ -187,36 +171,14 @@ class MainActivity : AppCompatActivity() {
         playbackManager.connect { success ->
             if (success) {
                 spotifyPlaybackManager = playbackManager
+                //Home pantaila
+                val rvPosts: RecyclerView = findViewById(R.id.rvPosts)
+                val pbKargatzen: ProgressBar = findViewById(R.id.pbKargatzen)
+                homePantaila.sortu(rvPosts, pbKargatzen, this,spotifyPlaybackManager)
                 //setupPlaybackControls(playbackManager)
             } else {
                 showError("Failed to connect to Spotify app. Please ensure Spotify is installed.")
             }
         }
     }
-
-    /*private fun setupPlaybackControls(playbackManager: SpotifyPlaybackManager) {
-        findViewById<Button>(R.id.btn_play).setOnClickListener {
-            // Play a specific track or playlist
-            playbackManager.play("spotify:track:6D87OewwdEhhSUWij4jUKp")
-            playbackManager.getCurrentSongInfo(oraingoAbestia)
-        }
-
-        findViewById<Button>(R.id.btn_pause).setOnClickListener {
-            playbackManager.pause()
-        }
-
-        findViewById<Button>(R.id.btn_next).setOnClickListener {
-            playbackManager.skipToNext()
-        }
-
-        // Get current player state
-        playbackManager.getCurrentPlayerState { playerState ->
-            playerState?.let { state ->
-                val isPlaying = !state.isPaused
-                val currentTrack = state.track
-                Log.d("PlayerState", "Playing: $isPlaying, Track: ${currentTrack.name}")
-            }
-        }
-    }*/
-
 }

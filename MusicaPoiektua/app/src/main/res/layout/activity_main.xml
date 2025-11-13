@@ -15,6 +15,7 @@
     app:layout_constraintBottom_toTopOf="@id/bottomNav">
 
     <include
+        android:id="@+id/included"
         layout="@layout/home_pantaila"
         android:layout_width="match_parent"
         android:layout_height="match_parent"/>
