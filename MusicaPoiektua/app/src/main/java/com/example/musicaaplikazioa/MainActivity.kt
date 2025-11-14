@@ -61,7 +61,11 @@ class MainActivity : AppCompatActivity() {
                     mostrarPerfil()
                     true
                 }
-                R.id.nav_search -> {
+                R.id.nav_add -> {
+                    val intent = Intent(this, AddActivity::class.java)
+                    intent.putExtra("ACCESS_TOKEN", accessToken)
+                    startActivity(intent)
+                    finish()
                     true
                 }
                 else -> false
@@ -71,9 +75,9 @@ class MainActivity : AppCompatActivity() {
 
     private fun mostrarHome() {
         val contenedor = findViewById<ConstraintLayout>(R.id.contenedorPrincipal)
-        contenedor.removeAllViews() // quitar lo que estuviera antes
+        contenedor.removeAllViews()
 
-        // Inflar el layout de home
+
         val homeView = layoutInflater.inflate(R.layout.home_pantaila, contenedor, false)
         contenedor.addView(homeView)
         val rvPosts: RecyclerView = findViewById(R.id.rvPosts)
@@ -84,9 +88,8 @@ class MainActivity : AppCompatActivity() {
 
     private fun mostrarPerfil() {
         val contenedor = findViewById<ConstraintLayout>(R.id.contenedorPrincipal)
-        contenedor.removeAllViews() // quitar el home incluido
+        contenedor.removeAllViews()
 
-        // Inflar el layout de perfil
         val perfilView = layoutInflater.inflate(R.layout.profila_pantaila, contenedor, false)
         contenedor.addView(perfilView)
 

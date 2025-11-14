@@ -1,5 +1,6 @@
 package com.example.musicaaplikazioa.adapter
 
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -31,6 +32,7 @@ class PostAdapterGrid(private val postList: List<Post>) :
         holder.tvSongName.text = post.spotifyData.name
         holder.tvSongRating.text = "${post.rate} ⭐"
 
+        Log.d("PostAdapterGrid", "Cargando imagen: ${post.spotifyData.url}")
         Glide.with(holder.itemView.context)
             .load(post.spotifyData.url)
             .centerCrop()

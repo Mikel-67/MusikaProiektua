@@ -67,11 +67,12 @@ class SpotifyPlaybackManager(private val context: Context) {
             callback(playerState)
         }
     }
-    fun getCurrentSongInfo(oraingoAbestia: TextView){
-        spotifyAppRemote?.playerApi?.playerState?.setResultCallback {
-            playerState -> val track = playerState.track
+    fun getCurrentSongInfo(oraingoAbestia: TextView) {
+        spotifyAppRemote?.playerApi?.playerState?.setResultCallback { playerState ->
+            val track = playerState.track
             if (track != null) {
-                val songInfo = "Título: ${track.name}\nArtista: ${track.artist.name}\nÁlbum: ${track.album.name} \n ${track.uri}"
+                val songInfo =
+                    "Título: ${track.name}\nArtista: ${track.artist.name}\nÁlbum: ${track.album.name} \n ${track.uri}"
                 oraingoAbestia.text = songInfo
             }
         }
