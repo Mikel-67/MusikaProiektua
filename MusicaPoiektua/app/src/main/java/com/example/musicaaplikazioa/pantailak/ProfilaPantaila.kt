@@ -23,7 +23,7 @@ class ProfilaPantaila {
     private var postList: ArrayList<Post> = ArrayList()
     private lateinit var adapter: PostAdapterGrid
 
-    private var userId: String = "1"
+    private var userId: String = ""
     fun sortu(
         context: Context,
         ivProfilePic: ImageView,

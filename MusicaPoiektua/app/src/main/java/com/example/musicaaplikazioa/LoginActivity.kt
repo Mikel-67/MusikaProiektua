@@ -43,7 +43,12 @@ class LoginActivity : AppCompatActivity() {
             .get()
             .addOnSuccessListener { documents ->
                 if (!documents.isEmpty) {
-                    startActivity(Intent(this, MainActivity::class.java))
+                    var doc = documents.documents[0]
+                    val userId = doc.id
+
+                    val intent = Intent(this, MainActivity::class.java)
+                    intent.putExtra("USER_ID", userId) // intent bidali
+                    startActivity(intent)
                     finish()
                 } else {
                     Toast.makeText(this, "User edo pasahitza okerrak", Toast.LENGTH_SHORT).show()

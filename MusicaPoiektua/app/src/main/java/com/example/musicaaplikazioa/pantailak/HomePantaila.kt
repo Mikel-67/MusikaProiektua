@@ -45,6 +45,7 @@ class HomePantaila {
                         val trackId = currentPost.spotifyData.spotifyTrackId
 
                         if (!trackId.isNullOrEmpty()) {
+                            spotifyPlaybackManager.getCurrentSongInfo()
                             val uri = "spotify:track:$trackId"
                             spotifyPlaybackManager.play(uri)
                             Log.d("Spotify", "🎵 Reproduciendo canción con ID: $uri")

@@ -36,11 +36,14 @@ class MainActivity : AppCompatActivity() {
     private lateinit var spotifyPlaybackManager: SpotifyPlaybackManager
     private lateinit var homePantaila: HomePantaila
     private var accessToken: String? = null
+    private var userId :String = ""
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+
+        userId = intent.getStringExtra("USER_ID").toString()
 
         spotifyAuthManager = SpotifyAuthManager(this)
 
@@ -64,6 +67,7 @@ class MainActivity : AppCompatActivity() {
                 R.id.nav_add -> {
                     val intent = Intent(this, AddActivity::class.java)
                     intent.putExtra("ACCESS_TOKEN", accessToken)
+                    intent.putExtra("USER_ID", userId)
                     startActivity(intent)
                     finish()
                     true
@@ -99,7 +103,7 @@ class MainActivity : AppCompatActivity() {
         val rvUserPosts: RecyclerView = findViewById(R.id.rvUserPosts)
 
         val profilaPantaila = ProfilaPantaila()
-        profilaPantaila.sortu(this, ivProfilePic, tvUserName, tvEmail, rvUserPosts, userId = "1")
+        profilaPantaila.sortu(this, ivProfilePic, tvUserName, tvEmail, rvUserPosts, userId)
     }
 
     //Spotify funtzioak
